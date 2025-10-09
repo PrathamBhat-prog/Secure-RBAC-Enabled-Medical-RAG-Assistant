@@ -11,7 +11,7 @@ app.include_router(chat_router)
 
 @app.get("/health")
 def health_check():
-    return {"message":"OK"}
+    return {"message":"OKkkk"}
 
 
 # def main():

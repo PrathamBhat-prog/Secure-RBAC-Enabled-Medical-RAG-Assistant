@@ -18,11 +18,6 @@ This project is a secure, role-sensitive chatbot that answers medical queries us
 
 ---
 
-## Deployed URL :
-
-![Frontend] https://rbac-medicalassistant-vbs9bxxzjfnpab6dsrfwah.streamlit.app/
-![Backend] https://rbac-medicalassistant.onrender.com
-
 ## ⚙️ Tech Stack
 
 - **Backend:** FastAPI (modular)
