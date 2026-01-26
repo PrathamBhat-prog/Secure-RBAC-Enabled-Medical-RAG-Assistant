@@ -13,23 +13,30 @@ router=APIRouter()
 security=HTTPBasic()
 
 
+
+
 def authenticate(credentials:HTTPBasicCredentials=Depends(security)):
     user=users_collection.find_one({"username":credentials.username})
     if not user or not verify_password(credentials.password,user['password']):
-        raise HTTPException(status_code=401,details="Invalid credentials")
+        raise HTTPException(status_code=401,detail="Invalid credentials")
     return {"username":user["username"],"role":user["role"]}
+
 
 
 @router.post("/signup")
 def signup(req:SignupRequest):
-    if users_collection.find_one({"username":req.username}):
-        raise HTTPException(status_code=400,details="User already exists")
-    users_collection.insert_one({
-        "username":req.username,
-        "password":hash_password(req.password),
-        "role":req.role
-    })
-    return {"message":"User created successfully"}
+    try:
+        if users_collection.find_one({"username":req.username}):
+            raise HTTPException(status_code=400,detail="User already exists")
+        users_collection.insert_one({
+            "username":req.username,
+            "password":hash_password(req.password),
+            "role":req.role
+        })
+        return {"message":"User created successfully"}
+    except Exception as e:
+        print(f"Error creating user: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
 
 @router.get("/login")
 def login(user=Depends(authenticate)):

@@ -5,10 +5,17 @@ from requests.auth import HTTPBasicAuth
 import os
 
 
-load_dotenv()
+from pathlib import Path
 
+# Load .env from root directory
+env_path = Path(__file__).resolve().parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 API_URL=os.getenv("API_URL")
+
+if not API_URL:
+    st.error("Error: API_URL is missing! Please add `API_URL=http://127.0.0.1:8000` to your .env file.")
+    st.stop()
 
 st.set_page_config(page_title="Healthcare RBAC RAG Chatbot",layout="centered")
 
@@ -48,7 +55,10 @@ def auth_ui():
                 st.success(f"Welcome {username}")
                 st.rerun()
             else:
-                st.error(res.json().get("detail","Login failed"))
+                try:
+                    st.error(res.json().get("detail", "Login failed"))
+                except ValueError:
+                    st.error(f"Login failed (Server Error): {res.text}")
 
 
     # Signup
@@ -58,12 +68,17 @@ def auth_ui():
         new_role=st.selectbox("Choose Role",["admin","doctor","nurse","patient","other"])
         if st.button("Signup"):
             payload={"username":new_user,"password":new_pass,"role":new_role}
-            res=requests.post(f"{API_URL}/signup",json=payload)
-            if res.status_code==200:
-                user_data=res.json()
-                st.success("Signup successful! You can login.")
-            else:
-                st.error(res.json().get("detail","Signup failed"))
+            try:
+                res=requests.post(f"{API_URL}/signup",json=payload)
+                print(f"DEBUG: Status Code: {res.status_code}")
+                print(f"DEBUG: Response Text: {res.text}")
+                if res.status_code==200:
+                    user_data=res.json()
+                    st.success("Signup successful! You can login.")
+                else:
+                    st.error(f"Error {res.status_code}: {res.text}")
+            except Exception as e:
+                st.error(f"Request failed: {e}")
 
 
 
@@ -71,7 +86,7 @@ def auth_ui():
 def upload_docs():
     st.subheader("Upload PDF for specific Role")
     uploaded_file=st.file_uploader("Choose a PDF file",type=["pdf"])
-    role_for_doc=st.selectbox("Target Role dor docs",["doctor","nurse","patient","other"])
+    role_for_doc=st.selectbox("Target Role dor docs",["admin", "doctor","nurse","patient","other"])
 
     if st.button("Upload Document"):
         if uploaded_file:
@@ -83,7 +98,11 @@ def upload_docs():
                 st.success(f"Uploaded: {uploaded_file.name}")
                 st.info(f"Doc Id : {doc_info['doc_id']},Access:{doc_info['accessible_to']}")
             else:
-                st.error(res.json().get("detail","Upload failed"))
+                try:
+                    error_detail = res.json().get("detail", "Upload failed")
+                except ValueError:
+                    error_detail = f"Server Error ({res.status_code}): {res.text}"
+                st.error(error_detail)
         else:
             st.warning("Please upload a file")
 
@@ -98,16 +117,24 @@ def chat_interface():
         if not msg.strip():
             st.warning("Please enter a query")
         
-        res=requests.post(f"{API_URL}/chat",data={"message":msg},auth=get_auth())
-        if res.status_code==200:
-            reply=res.json()
-            st.markdown('### Answer: ')
-            st.success(reply["answer"])
-            if reply.get("sources"):
-                for src in reply["sources"]:
-                    st.write(f"--{src}")
-        else:
-            st.error(res.json().get("detail","Something is wrong."))
+        try:
+            res=requests.post(f"{API_URL}/chat",data={"message":msg},auth=get_auth())
+            
+            if res.status_code==200:
+                reply=res.json()
+                st.markdown('### Answer: ')
+                st.success(reply["answer"])
+                if reply.get("sources"):
+                    for src in reply["sources"]:
+                        st.write(f"--{src}")
+            else:
+                try:
+                    error_detail = res.json().get("detail", "Something is wrong.")
+                except ValueError:
+                    error_detail = f"Server Error ({res.status_code}): {res.text}"
+                st.error(error_detail)
+        except Exception as e:
+            st.error(f"Connection Error: {e}")
 
 
 # main flow

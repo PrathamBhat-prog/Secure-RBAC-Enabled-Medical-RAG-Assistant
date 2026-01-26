@@ -11,8 +11,8 @@ async def upload_docs(
     file: UploadFile = File(...),
     role: str = Form(...)
 ):
-    if user["role"] != "admin":
-        raise HTTPException(status_code=403, detail="Only admin can upload files")
+    if user["role"] not in ["admin", "doctor"]:
+        raise HTTPException(status_code=403, detail="Only admin and doctor can upload files")
 
     doc_id = str(uuid.uuid4())
     await load_vectorstore([file], role, doc_id)  # ✅ AWAIT here
