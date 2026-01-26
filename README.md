@@ -26,7 +26,7 @@ This project is a secure, role-sensitive chatbot that answers medical queries us
 - **LLM:** Groq API using LLaMA-3
 - **Embeddings:** Google Generative AI Embeddings
 - **Authentication:** HTTP Basic Auth + bcrypt
-- **Frontend (Optional):** Streamlit
+- **Frontend:** Streamlit
 
 ---
 
@@ -58,59 +58,103 @@ This project is a secure, role-sensitive chatbot that answers medical queries us
 | POST   | `/signup`      | Register new users                  |
 | GET    | `/login`       | Login with HTTP Basic Auth          |
 | POST   | `/upload_docs` | Admin-only endpoint to upload files |
-| POST   | `/chat`        | Role-sensitive chatbot Q\&A         |
+| POST   | `/chat`        | Role-sensitive chatbot Q&A          |
 
 ---
 
 ## 🚀 Getting Started
 
-1. Clone the repo:
+### 1. Clone the Repository
 
-   ```bash
-   git clone https://github.com/yourusername/rbac-medicalAssistant.git
-   cd rbac-medicalAssistant
-   ```
+```bash
+git clone https://github.com/yourusername/rbac-medicalAssistant.git
+cd rbac-medicalAssistant
+```
 
-2. Create a `.env` file:
+### 2. Configure Environment Variables
 
-   ```env
-   MONGO_URI=your_mongo_uri
-   DB_NAME=your_db_name
-   PINECONE_API_KEY=your_pinecone_key
-   GOOGLE_API_KEY=your_google_api_key
-   GROQ_API_KEY=your_groq_key
-   ```
+Create a `.env` file in the root directory and add the following:
 
-3. Create venv:
+```env
+# Database Configuration
+MONGO_URI=mongodb+srv://<username>:<password>@cluster0.mongodb.net/?retryWrites=true&w=majority
+DB_NAME=medical_db
 
-   ```bash
-   uv venv
-   .venv/Scripts/activate
-   ```
+# Vector Database (Pinecone)
+PINECONE_API_KEY=your_pinecone_api_key
+PINECONE_ENV=us-east-1                   # Your Pinecone environment region
+PINECONE_INDEX_NAME=medical-rag          # Your Index Name
 
-4. Install dependencies:
+# AI Services
+GOOGLE_API_KEY=your_google_ai_key        # For Embeddings
+GROQ_API_KEY=your_groq_api_key           # For LLM Inference
 
-   ```bash
-   uv pip install -r requirements.txt
-   ```
+# App Configuration
+API_URL=http://127.0.0.1:8000            # Backend URL for the Frontend to connect
+```
 
-5. Run the app:
+### 3. Setup Virtual Environment
 
-   ```bash
-   uvicorn main:app --reload
-   ```
+```bash
+# Create virtual environment
+python -m venv venv
+
+# Activate (Windows)
+.\venv\Scripts\activate
+
+# Activate (Mac/Linux)
+source venv/bin/activate
+```
+
+### 4. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 🏃‍♂️ Running the Application
+
+You will need two terminals running simultaneously.
+
+### Terminal 1: Backend Server
+
+```bash
+# Navigate to root directory
+# Ensure venv is activated
+uvicorn server.main:app --reload
+```
+*Server runs at `http://127.0.0.1:8000`*
+
+### Terminal 2: Frontend Client
+
+```bash
+# Navigate to root directory
+# Ensure venv is activated
+streamlit run client/main.py
+```
+*Client runs at `http://localhost:8501`*
+
+---
+
+## 🛠 Troubleshooting
+
+**MongoDB Connection Issues:**
+If you see "DNS Timeout" or "SSL Handshake Failed", your network might be blocking SRV records.
+1. Go to MongoDB Atlas -> Connect -> Drivers.
+2. Select **Older Version** to get the **Standard Connection String** (starts with `mongodb://` instead of `mongodb+srv://`).
+3. Replace `MONGO_URI` in your `.env` file with this string.
 
 ---
 
 ## 🌱 Future Enhancements
 
 - Add JWT-based Auth + Refresh Tokens
-- Build an interactive Streamlit/React-based frontend
 - Document download/preview functionality
 - Audit logs for medical compliance
-- Many more
 - **🧍️‍ Contributions are welcome! Feel free to fork and submit PRs.**
 
 ---
 
-© 2025 \[Supratim / sn dev] — All rights reserved.
+© 2025 [Supratim / sn dev] — All rights reserved.
