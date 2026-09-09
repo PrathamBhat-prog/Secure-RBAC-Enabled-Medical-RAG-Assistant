@@ -26,8 +26,8 @@ pydantic
 requests
 tqdm
 
-# Authentication
-pymongo[bson] 
+# Authentication & database
+psycopg2-binary
 bcrypt 
 
 

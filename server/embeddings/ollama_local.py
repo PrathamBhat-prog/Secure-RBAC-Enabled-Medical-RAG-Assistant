@@ -23,7 +23,7 @@ class OllamaLocalEmbeddings:
                 f"{self.base_url}/api/embeddings",
                 json={
                     "model": self.model,
-                    "prompt": text
+                    "prompt": text or " "
                 },
                 timeout=30
             )

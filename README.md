@@ -1,192 +1,190 @@
-# 🏥 RBAC-based RAG Medical Chatbot (Ollama + Groq)
+# RBAC-based RAG Medical Chatbot (Ollama + Groq)
 
-A secure, role-based access control (RBAC) chatbot designed for healthcare platforms, powered by Retrieval-Augmented Generation (RAG) with FastAPI, MongoDB, Pinecone, and seamless integration with **local Ollama embeddings** and **Groq Cloud LLMs**.
+A secure, role-based access control (RBAC) chatbot designed for healthcare platforms, powered by Retrieval-Augmented Generation (RAG) with FastAPI, **Supabase PostgreSQL**, Pinecone, local **Ollama embeddings**, and **Groq Cloud LLMs**.
 
 ![Thumbnail](./assets/thumbnail.png)
 
-## 🧠 Overview
+## Overview
 
-This project is a secure, role-sensitive chatbot that answers medical queries using advanced LLMs and vector-based document retrieval. It supports role-based access for **Doctors**, **Nurses**, **Patients**, and **Admins**, ensuring that sensitive medical information is retrieved and displayed based on user privileges.
+This project is a role-sensitive chatbot that answers medical queries using LLMs and vector document retrieval. It supports **Doctors**, **Nurses**, **Patients**, and **Admins**, so retrieved context is limited to documents the signed-in role is allowed to see.
 
-What makes this project unique is its hybrid approach:
-- **Embeddings**: Generated locally using **Ollama (nomic-embed-text)** for privacy and cost-efficiency.
-- **LLM Inference**: Powered by **Groq Cloud (Llama-3.3-70b-versatile)** for lightning-fast responses.
-- **Vector Search**: Managed by **Pinecone** for scalable similarity search.
-
----
+Hybrid setup:
+- **Embeddings**: Local **Ollama (`nomic-embed-text`)** for privacy and cost control.
+- **LLM Inference**: **Groq Cloud** (default `openai/gpt-oss-120b`) for fast responses.
+- **Vector Search**: **Pinecone**, with metadata filters applied **at query time** (not after retrieval).
+- **Users & roles**: **Supabase PostgreSQL**.
 
 ![Application Flow](./assets/applicationFlow.png)
 
 ![Core Modules](./assets/coreModules.png)
 
-[📄 View Full Project Report (PDF)](./assets/projectReport.pdf)
+[View Full Project Report (PDF)](./assets/projectReport.pdf)
 
----
+## Tech Stack
 
-## ⚙️ Tech Stack
-
-- **Backend:** FastAPI (Async & Modular)
-- **Database:** MongoDB Atlas (User Management & Roles)
-- **Vector DB:** Pinecone (knowledge base indexing)
-- **LLM:** Groq API (Model: `llama-3.3-70b-versatile`)
-- **Embeddings:** Ollama (Model: `nomic-embed-text`) - **Local Execution**
-- **Authentication:** HTTP Basic Auth + bcrypt hashing
+- **Backend:** FastAPI
+- **Database:** Supabase PostgreSQL (users and roles)
+- **Vector DB:** Pinecone
+- **LLM:** Groq API (default `openai/gpt-oss-120b`; override with `GROQ_MODEL`)
+- **Embeddings:** Ollama (`nomic-embed-text`)
+- **Authentication:** HTTP Basic Auth + bcrypt
 - **Frontend:** Streamlit
 
----
+## Core Modules
 
-## 🧩 Core Modules
+| Module | Responsibility |
+| --- | --- |
+| `server/auth/` | Signup, login, bcrypt hashing, role checks |
+| `server/chat/` | RAG pipeline with Pinecone role filters and Groq |
+| `server/docs/` | PDF loading, chunking, and upsert to Pinecone |
+| `server/embeddings/` | HTTP wrapper for local Ollama embeddings |
+| `server/config/` | Supabase PostgreSQL connection pool and schema |
+| `client/` | Streamlit UI for auth, admin/doctor uploads, and chat |
 
-| Module        | Responsibility                                              |
-| ------------- | ----------------------------------------------------------- |
-| `server/auth/`| Handles user authentication (signup, login) & role verification |
-| `server/chat/`| Manages RAG pipeline, context retrieval, and LLM inference  |
-| `server/docs/`| PDF loading, chunking, and vector upsertion to Pinecone     |
-| `server/embeddings/`| Custom extensive wrapper for local Ollama embeddings    |
-| `server/config/`| Database connections (MongoDB)                            |
-| `client/`     | Streamlit frontend for chat interface and admin uploads     |
+## Role-Based Access Flow
 
----
+- **Admin:** Uploads documents, assigns visibility, can retrieve all roles.
+- **Doctor:** Can upload documents; can retrieve doctor, nurse, patient, and public (`other`) docs.
+- **Nurse:** Can retrieve nurse, patient, and public docs.
+- **Patient:** Can retrieve patient and public docs.
+- **Other:** Restricted to public (`other`) documents.
 
-## 🔐 Role-Based Access Flow
+Retrieval uses Pinecone metadata `filter` so unauthorized chunks never enter the top-k results.
 
-- **Admin:** Uploads documents and assigns visibility roles (e.g., "Only for Doctors").
-- **Doctor/Nurse:** Can access specialized clinical documents and patient records.
-- **Patient:** Can query general medical advice and their own accessible records.
-- **Other/Guest:** Restricted to public health information only.
+## API Endpoints
 
----
+| Method | Route | Description |
+| --- | --- | --- |
+| GET | `/health` | API and database status |
+| POST | `/signup` | Register a user with a valid role |
+| GET | `/login` | Authenticate with HTTP Basic Auth |
+| POST | `/upload_docs` | Admin/Doctor PDF upload into the RAG index |
+| POST | `/chat` | Role-aware Q&A |
 
-## 📡 API Endpoints
+## Getting Started
 
-| Method | Route          | Description                         |
-| ------ | -------------- | ----------------------------------- |
-| POST   | `/signup`      | Register new users with roles       |
-| GET    | `/login`       | Authenticate & retrieve token/role  |
-| POST   | `/upload_docs` | (Admin/Doctor) Upload PDFs to RAG   |
-| POST   | `/chat`        | Context-aware Q&A based on role     |
+### 1. Local embeddings (Ollama)
 
----
-
-## 🚀 Getting Started
-
-### 1. Prerequisites (Local AI Setup)
-
-This project uses **Ollama** for local embeddings. You must have Ollama installed and running.
-
-1.  **Install Ollama**: [Download here](https://ollama.com/)
-2.  **Pull the Embedding Model**:
-    ```bash
-    ollama pull nomic-embed-text
-    ```
-3.  **Start the Ollama Server**:
-    ```bash
-    ollama serve
-    ```
-
-### 2. AWS/Cloud Setup
-Ensure you have accounts for:
-- **MongoDB Atlas** (Cluster URL)
-- **Pinecone** (API Key & Index Name)
-- **Groq Cloud** (API Key)
-
-### 3. Clone the Repository
+1. Install Ollama: https://ollama.com/
+2. Pull the embedding model:
 
 ```bash
-git clone https://github.com/PrathamBhat-prog/MedicalAssistant.git
-cd rbac-medicalAssistant
+ollama pull nomic-embed-text
 ```
 
-### 4. Configure Environment Variables
+3. Start Ollama:
 
-Create a `.env` file in the root directory (based on `.env.example` if available):
-
-```env
-# Database Configuration
-MONGO_URI=mongodb+srv://<user>:<password>@cluster0.mongodb.net/?retryWrites=true&w=majority
-DB_NAME=medical_db
-
-# Vector Database (Pinecone)
-PINECONE_API_KEY=your_pinecone_key_here
-PINECONE_ENV=us-east-1                   # Your Pinecone region
-PINECONE_INDEX_NAME=medical-rag          # Must match your index name
-
-# AI Services
-GROQ_API_KEY=gsk_...                     # Groq Cloud API Key
-# Note: Google API Key is NO LONGER REQUIRED as we use Ollama.
-
-# App Configuration
-API_URL=http://127.0.0.1:8000            # Backend URL for Client
-```
-
-### 5. Setup Python Environment
-
-```bash
-# Create virtual environment
-python -m venv venv
-
-# Activate (Windows)
-.\venv\Scripts\activate
-
-# Activate (Mac/Linux)
-source venv/bin/activate
-```
-
-### 6. Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
----
-
-## 🏃‍♂️ Running the Application
-
-You will need **three** terminal windows running simultaneously.
-
-### Terminal 1: Ollama Server
-(Ensure Ollama is running in the background)
 ```bash
 ollama serve
 ```
 
-### Terminal 2: Backend Server
-```bash
-# From root directory
-uvicorn server.main:app --reload
-```
-*Server runs at `http://127.0.0.1:8000`*
+### 2. Cloud accounts
 
-### Terminal 3: Frontend Client
+- **Supabase** (PostgreSQL connection string)
+- **Pinecone** (API key and index name, dimension **768**)
+- **Groq Cloud** (API key)
+
+### 3. Clone the repository
+
 ```bash
-# From root directory
+git clone https://github.com/PrathamBhat-prog/Secure-RBAC-Enabled-Medical-RAG-Assistant.git
+cd Secure-RBAC-Enabled-Medical-RAG-Assistant
+```
+
+### 4. Environment variables
+
+Copy `.env.example` to `.env` in the project root:
+
+```env
+# Supabase PostgreSQL (session pooler is IPv4-friendly; SSL required)
+# Username must be postgres.<project-ref> when using *.pooler.supabase.com
+DATABASE_URL=postgresql://postgres.YOUR-PROJECT-REF:[YOUR-PASSWORD]@aws-0-YOUR-REGION.pooler.supabase.com:5432/postgres?sslmode=require
+
+# Vector Database (Pinecone)
+PINECONE_API_KEY=your_pinecone_key_here
+PINECONE_ENV=us-east-1
+PINECONE_INDEX_NAME=medical-rag
+
+# AI Services
+GROQ_API_KEY=gsk_...
+GROQ_MODEL=openai/gpt-oss-120b
+
+# Backend URL used by the Streamlit client
+API_URL=http://127.0.0.1:8001
+```
+
+The `users` table is created automatically on API startup.
+
+### 5. Python environment
+
+```bash
+python -m venv venv
+
+# Windows
+.\venv\Scripts\activate
+
+# Mac/Linux
+source venv/bin/activate
+
+pip install -r requirements.txt
+```
+
+## Running the Application
+
+Use three processes (or `start_app.bat` on Windows).
+
+### Terminal 1: Ollama
+
+```bash
+ollama serve
+```
+
+### Terminal 2: Backend
+
+```bash
+cd server
+uvicorn main:app --reload --port 8001
+```
+
+API: `http://127.0.0.1:8001`
+
+### Terminal 3: Frontend
+
+From the project root:
+
+```bash
 streamlit run client/main.py
 ```
-*Client runs at `http://localhost:8501`*
 
----
+Client: `http://localhost:8501`
 
-## 🛠 Troubleshooting
+Windows shortcut from the project root:
 
-**Ollama Connection Refused:**
-- Ensure `ollama serve` is running.
-- Verify `http://localhost:11434` is accessible.
-- If using Docker, ensure the container can reach the host network.
+```bat
+start_app.bat
+```
 
-**Pinecone Dimension Mismatch:**
-- The `nomic-embed-text` model outputs **768** dimensions.
-- Ensure your Pinecone index is created with `dimension=768`.
+## Troubleshooting
 
-**MongoDB DNS Issues:**
-- If you see SSL/DNS timeouts, try using the standard `mongodb://` connection string instead of `mongodb+srv://`.
+**Ollama connection refused**
+- Confirm `ollama serve` is running and `http://localhost:11434` responds.
+- Confirm `nomic-embed-text` is pulled.
 
----
+**Pinecone dimension mismatch**
+- `nomic-embed-text` produces **768** dimensions.
+- Create the index with `dimension=768`. The app will not delete an existing mismatched index.
 
-## 🌱 Future Enhancements
+**Supabase / Postgres connection**
+- Direct `db.<project>.supabase.co:5432` is IPv6-only on many free projects.
+- On IPv4-only networks, use the **session pooler** (`aws-0-<region>.pooler.supabase.com:5432`) with username `postgres.<project-ref>`.
+- Always include `sslmode=require`. URL-encode the password if it has special characters.
 
-- **JWT Auth**: Upgrade from Basic Auth to JWT for better security.
-- **Hybrid Search**: Combine dense vector search with keyword search (BM25).
-- **Citation Tracking**: Better highlighting of source documents in UI.
-- **Docker Support**: Containerize the entire stack including Ollama.
+**Client cannot reach API**
+- `API_URL` in `.env` must match the uvicorn port (default `8001`).
 
----
+## Future Enhancements
+
+- JWT instead of HTTP Basic Auth
+- Hybrid dense + keyword search
+- Stronger citation highlighting in the UI
+- Docker Compose for API, client, and Ollama
