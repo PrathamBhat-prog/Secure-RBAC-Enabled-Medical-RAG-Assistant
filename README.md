@@ -18,8 +18,6 @@ Hybrid setup:
 
 ![Core Modules](./assets/coreModules.png)
 
-[View Full Project Report (PDF)](./assets/projectReport.pdf)
-
 ## Tech Stack
 
 - **Backend:** FastAPI
@@ -181,21 +179,6 @@ start_app.bat
 
 **Client cannot reach API**
 - `API_URL` in `.env` must match the uvicorn port (default `8001`).
-
-## Interview prep (local only)
-
-Generate a **project guide PDF** and **interview cheat sheet** (same pattern as the stock analyser repo):
-
-```bash
-python private/generate_deliverables.py
-```
-
-Outputs (gitignored under `private/deliverables/`):
-
-- `Medical_RAG_Assistant_Project_Guide.pdf` — architecture, RBAC design, tradeoffs, bugs fixed
-- `Interview_Cheat_Sheet.docx` — 30/60/90s pitches, Q&A, demo script
-
-The script also refreshes `assets/projectReport.pdf` linked from this README.
 
 ## Future Enhancements
 
